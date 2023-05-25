@@ -69,11 +69,11 @@ class Utilities:
         answer = input('Write 1 or 2: ')
         while True:
             if answer == '1':
-                Utilities.switch = True
+                self.switch = True
                 print('\nSwitched the mode to actual rates successfully!')
                 return
             elif answer == '2':
-                Utilities.switch = False
+                self.switch = False
                 print('\nSwitched the mode to saved rates successfully!')
                 return
             else:
@@ -152,7 +152,7 @@ class CurrencyConverter(Utilities):
         """
 
         try:
-            if not Utilities.switch:
+            if not self.switch:
                 if 'rates.db' not in os.listdir(BASE_DIR + '/data'):
                     print('It seems, that you haven\'t got needed database yet. ' + \
                           'Do you want to create one now? It will take approx. 3-5 minutes. ' + \
@@ -280,7 +280,7 @@ class CurrencyConverter(Utilities):
 
         total = 240
         progress = 0
-        Utilities.switch = True
+        self.switch = True
         for i, curr1 in enumerate(CURRENCIES_SHORT['AlphabeticCode']):
             # print(i, curr1)
             for curr2 in CURRENCIES_SHORT['AlphabeticCode']:
@@ -301,7 +301,7 @@ class CurrencyConverter(Utilities):
 
         print(colorama.Fore.RESET)
         print('\nUpdated the database successfully!')
-        Utilities.switch = False
+        self.switch = False
 
     def show_saved_currencies(self):
         """
