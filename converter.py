@@ -6,6 +6,8 @@ import colorama
 import os
 import pandas as pd
 import urllib
+import currencyapicom
+import json
 
 
 class ExchangeError(BaseException):
@@ -94,8 +96,7 @@ class CurrencyConverter(Utilities):
         Uses predefined algorithms for computing result due to the issues
         with a possibility of double/triple conversion rate by card systems.
     update_rates()
-        Updates rates for pairs of currencies in the internal database's table 'prepared_currencies'
-        by accepting while using the program.
+        Updates rates for pairs of currencies in the internal database's table 'prepared_currencies'.
     show_saved_currencies()
         Returns rates for currencies for predefined by user pairs.
     add_new_pair(from_currency, to_currency, amount):
@@ -111,7 +112,7 @@ class CurrencyConverter(Utilities):
         Raises
         ------
         ExchangeError
-            In case of bad response from the API
+            In case of a bad response from the API
         """
         if not os.path.exists('data'):
             os.mkdir('data')
@@ -257,10 +258,8 @@ class CurrencyConverter(Utilities):
             with open(BASE_DIR + '/data/timestamp.txt', 'r+') as file:
                 if (timestamp - float(file.readline()) < 86400 and
                     'rates.db' in os.listdir(BASE_DIR + '/data')):
-                    print('\nIt is no need to refresh your database, data is actual.\n')
-                    print('Do you want to refresh it anyway?')
-                    if not self.menu(6):
-                        return
+                    print('\nIt is no need to refresh your database, data is actual.')
+                    return
                 file.seek(0)
                 file.truncate()
                 file.write(str(timestamp))
@@ -278,29 +277,34 @@ class CurrencyConverter(Utilities):
         self.c.execute('DELETE FROM prepared_currencies')
         self.connect.commit()
 
-        total = 240
+        # download 'USD - X' pairs from the API
+        api_object = currencyapicom.Client(API_KEY)
+        rates_from_usd = api_object.latest(
+            base_currency='USD',
+            currencies=[currency for currency in CURRENCIES_SHORT['AlphabeticCode']])
+
+        total = len(rates_from_usd['data']) * (len(rates_from_usd['data']) + 1)
         progress = 0
-        self.switch = True
-        for i, curr1 in enumerate(CURRENCIES_SHORT['AlphabeticCode']):
-            # print(i, curr1)
-            for curr2 in CURRENCIES_SHORT['AlphabeticCode']:
-                if curr1 != curr2:
-                    rate = self.exchange(curr1, curr2)
-                    if curr2 == 'EUR' and not rate:
-                        break
-                    if not rate:
-                        continue
-                    # print(rate)
-                    self.c.execute('''
-                          INSERT INTO prepared_currencies (from_currency, to_currency, rate)
-                          VALUES (?, ?, ?)''', (curr1, curr2, rate))
-                    self.connect.commit()
 
-                    progress += 1
-                    self.progress_bar(progress, total)
+        self.progress_bar(progress, total)
+        for base_currency in rates_from_usd['data'].items():
+            for target_currency in rates_from_usd['data'].items():
+                if base_currency[0] == target_currency[0]:
+                    continue
 
-        print(colorama.Fore.RESET)
-        print('\nUpdated the database successfully!')
+                rate = round(target_currency[1]['value'] / base_currency[1]['value'], 5)
+
+                self.c.execute(
+                    '''INSERT INTO prepared_currencies (from_currency, to_currency, rate)
+                      VALUES (?, ?, ?)''', (base_currency[0], target_currency[0], rate)
+                )
+                self.connect.commit()
+                self.progress_bar(progress, total)
+
+        # pass to progress bar numbers to have 100% completion
+        # in case of wrong calculation of the total amount of iterations
+        self.progress_bar(1, 1)
+
         self.switch = False
 
     def show_saved_currencies(self):
@@ -732,6 +736,8 @@ if __name__ == '__main__':
         TARGET_URL = 'https://www.x-rates.com/calculator/'
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+        API_KEY = 'YkvsDr8AFiIpgxr5tLJPPnDQskeez3xU3JJNLgyG'
+
         # Initializing object of the Trie class to add needed words (names of the countries and currencies' codes)
         # from pandas DataSet CURRENCIES_SHORT
         trie_object = Trie()
@@ -785,8 +791,8 @@ if __name__ == '__main__':
         print('\nCannot read needed datasets. Try to restart the program.\nExiting...')
         time.sleep(2)
         exit(0)
-    # except:
-    #     print(colorama.Fore.RESET)
-    #     print('\nUnhandled exception occurred. Exiting...')
-    #     time.sleep(2)
-    #     exit(0)
+    except:
+        print(colorama.Fore.RESET)
+        print('\nUnhandled exception occurred. Exiting...')
+        time.sleep(2)
+        exit(0)
