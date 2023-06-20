@@ -258,7 +258,7 @@ class CurrencyConverter(Utilities):
             with open(BASE_DIR + '/data/timestamp.txt', 'r+') as file:
                 if (timestamp - float(file.readline()) < 86400 and
                     'rates.db' in os.listdir(BASE_DIR + '/data')):
-                    print('\nIt is no need to refresh your database, data is actual.')
+                    print('It is no need to refresh your database, data is actual.\n')
                     return
                 file.seek(0)
                 file.truncate()
@@ -317,7 +317,7 @@ class CurrencyConverter(Utilities):
         if data:
             return data
         else:
-            print('\nCan\'t find any saved pairs of currencies. Create them first, please.\n')
+            print('Can\'t find any saved pairs of currencies. Create them first, please.\n')
 
     def add_new_pair(self, from_currency: str, to_currency: str, amount: float):
         """Adds a new record in the database's table 'saved_currencies'"""
@@ -717,9 +717,18 @@ class Trie:
                 answer += c
         return answer
 
+class ProgramClass(App, Trie):
+    '''
+    Initializes needed variables, such as paths, API key etc.
+    Initializes trie (prefix tree) using a list of currencies stored in Google Drive.
 
-if __name__ == '__main__':
-    try:
+    Methods
+    -------
+    run_program()
+        Initializes an object of the App class and runs the main loop.
+    '''
+    def __init__(self):
+        global CURRENCIES_SHORT, EUROPE_CURRENCIES, TARGET_URL, BASE_DIR, API_KEY, trie_object
         # Upload short list of currencies' codes and countries' names from Google Drive to pandas DataSet
         # to add them to the trie
         url_currencies_short = 'https://drive.google.com/file/d/1LFQO13AVf4U0LXOzKEycRYL0gKx3tv1m/'.split('/')[-2]
@@ -728,7 +737,7 @@ if __name__ == '__main__':
 
         # The same, but uploading europe currencies only to check in CurrencyConverter.double_conversion method
         url_europe_currencies = \
-        'https://drive.google.com/file/d/1JRSbtOFZ54PPCo55qwA4FfPKjw31NRY5/view?usp=share_link'.split('/')[-2]
+            'https://drive.google.com/file/d/1JRSbtOFZ54PPCo55qwA4FfPKjw31NRY5/view?usp=share_link'.split('/')[-2]
         url_europe_currencies = 'https://drive.google.com/uc?id=' + url_europe_currencies
         EUROPE_CURRENCIES = pd.read_csv(url_europe_currencies)
 
@@ -752,47 +761,54 @@ if __name__ == '__main__':
         # of auto reset of changed colors to avoid mispainting in a terminal
         colorama.init(autoreset=True)
 
-        # Initializing an object of App class to work with in further loop
+    def run_program(self):
+        # Initializing an object of the App class to work with in further loop
         x = App()
+        try:
+            # Loop for the main part of the program
+            while True:
+                x.menu()
+                input_num = x.input_choice()
+                if input_num == '1':
+                    x.app_exchange()
+                elif input_num == '2':
+                    x.app_double_conversion()
+                elif input_num == '3':
+                    x.app_show_saved_currencies()
+                elif input_num == '4':
+                    x.update_rates()
+                elif input_num == '5':
+                    x.app_create_pairs()
+                elif input_num == '6':
+                    x.app_delete_pairs()
+                elif input_num == '7':
+                    x.app_delete_all()
+                elif input_num == 'x':
+                    x.switch_rate_source()
+                else:
+                    raise KeyboardInterrupt
+                input('\nContinue?\n(Press return)\n')
+        except ExchangeError as e:
+            print(colorama.Fore.RESET)
+            print(e.__str__() + '\nExiting...')
+            time.sleep(2)
+            exit(0)
+        except KeyboardInterrupt:
+            print('\nThank you for using the application. Goodbye!')
+            time.sleep(2)
+            exit(0)
+        except urllib.error.HTTPError:
+            print('\nCannot read needed datasets. Try to restart the program.\nExiting...')
+            time.sleep(2)
+            exit(0)
+        except:
+            print(colorama.Fore.RESET)
+            print('\nUnhandled exception occurred. Exiting...')
+            time.sleep(2)
+            exit(0)
 
-        # Loop for the main part of the program
-        while True:
-            x.menu()
-            input_num = x.input_choice()
-            if input_num == '1':
-                x.app_exchange()
-            elif input_num == '2':
-                x.app_double_conversion()
-            elif input_num == '3':
-                x.app_show_saved_currencies()
-            elif input_num == '4':
-                x.update_rates()
-            elif input_num == '5':
-                x.app_create_pairs()
-            elif input_num == '6':
-                x.app_delete_pairs()
-            elif input_num == '7':
-                x.app_delete_all()
-            elif input_num == 'x':
-                x.switch_rate_source()
-            else:
-                raise KeyboardInterrupt
-            input('\nContinue?\n(Press return)\n')
-    except ExchangeError as e:
-        print(colorama.Fore.RESET)
-        print(e.__str__() + '\nExiting...')
-        time.sleep(2)
-        exit(0)
-    except KeyboardInterrupt:
-        print('\nThank you for using the application. Goodbye!')
-        time.sleep(2)
-        exit(0)
-    except urllib.error.HTTPError:
-        print('\nCannot read needed datasets. Try to restart the program.\nExiting...')
-        time.sleep(2)
-        exit(0)
-    except:
-        print(colorama.Fore.RESET)
-        print('\nUnhandled exception occurred. Exiting...')
-        time.sleep(2)
-        exit(0)
+
+if __name__ == '__main__':
+    # Initialize needed variables and run the program
+    program = ProgramClass()
+    program.run_program()
