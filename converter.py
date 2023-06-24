@@ -762,6 +762,8 @@ class ProgramClass(App, Trie):
         colorama.init(autoreset=True)
 
     def run_program(self):
+        '''Method with the main loop of the program'''
+
         # Initializing an object of the App class to work with in further loop
         x = App()
         try:
