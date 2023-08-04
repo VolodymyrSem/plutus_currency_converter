@@ -33,7 +33,7 @@ class App:
 
     def create_pairs(self):
         """
-        Requests names of owned currency, target currency and amount of the operation, validates the data
+        Requests names of owned currency, target currency and amount of the operation, validates the data.
         """
 
         while True:
