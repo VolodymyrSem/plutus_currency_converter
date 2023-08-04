@@ -1,5 +1,4 @@
 import os
-import sqlite3 as sql
 
 from converter.core.currency_pair import CurrencyPair
 from converter.core.exceptions import *
