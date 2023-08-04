@@ -27,12 +27,12 @@ class CurrencyPair(DBHandler, APIHandler):
         self.__result = result
 
     def set_result_from_api(self):
-        rates = self.get_rates_from_api(self.from_currency)
+        rate = self.get_rate_from_API(
+            self.from_currency,
+            self.to_currency
+        )
 
-        rate = rates.get(self.to_currency)
-        amount = self.amount
-
-        result = rate * amount
+        result = rate * self.amount
         self.__result = round(result, 5)
 
     def set_result_from_db(self):
