@@ -19,6 +19,8 @@ Updating rates in the internal database may be done at any time by user's confir
 Inputted currencies may be as alphabetic codes or three first letters of the country in which the currency is. 
 Searching needed code with prefix is processed by predefined prefix tree (Trie).
 
+The application supports 162 currencies.
+
 # Main menu
 
 Main menu has this format:
@@ -64,21 +66,3 @@ To use prepared rates, it is needed to download them first by choosing '4. Refre
 
 
 7. Also, user may delete all saved pairs at once.
-
-# Complete list of supported currencies:
-* BGN --- Bulgarian Lev
-* CAD --- Canadian Dollar
-* CHF --- Swiss Franc
-* CZK --- Czech Koruna
-* DKK --- Danish Krone
-* EUR --- Euro
-* GBP --- Pound Sterling
-* HUF --- Hungarian Forint
-* ISK --- Iceland Krona
-* NOK --- Norwegian Krone
-* PLN --- Polish Zloty
-* RON --- Romanian Leu
-* RUB --- Russian Ruble
-* SEK --- Swedish Krona
-* TRY --- Turkish Lira
-* USD --- US Dollar
