@@ -34,16 +34,18 @@ class App:
 
     def create_pairs(self):
         """
-        Requests names of owned currency, target currency and amount of the operation, validates the data, passes
-        it to CurrencyConverter.add_new_pair method for adding to the database's table 'saved_currencies'.
+        Requests names of owned currency, target currency and amount of the operation, validates the data.
         """
 
-        if self.__input_is_ready_to_exchange():
-            self.handler.db.insert_new_pair_in_saved_currencies(
-                self.converter.currency_pair.get_pair_as_tuple()
-            )
-            self.menu.print_smth_successfully('Inserted pair')
-            self.converter.currency_pair = None
+        while True:
+            if self.__input_is_ready_to_exchange():
+                self.handler.db.insert_new_pair_in_saved_currencies(
+                    self.converter.currency_pair.get_pair_as_tuple()
+                )
+                self.menu.print_smth_successfully('Inserted pair')
+                self.converter.currency_pair = None
+            else:
+                return
 
     def __input_is_ready_to_exchange(self) -> bool:
         while True:
@@ -172,6 +174,9 @@ class App:
         self.menu.ask_accepting_for_creating_db_now()
         return self.menu.user_accepted()
 
+    def update_rates(self):
+        self.handler.update_rates()
+
     def switch_rate_source(self):
         self.converter.switch_rate_source()
         self.menu.print_success_switch_source(self.converter.rates_are_from_db)
@@ -221,6 +226,3 @@ class App:
 
         if not os.path.exists('data'):
             os.mkdir('data')
-
-    def update_rates(self):
-        self.handler.update_rates()

@@ -20,7 +20,10 @@ def main():
             elif input_num == '3':
                 app.show_saved_currencies()
             elif input_num == '4':
+                start = time.time()
                 app.update_rates()
+                end = time.time()
+                print(f'Downloaded in {end - start} seconds')
             elif input_num == '5':
                 app.create_pairs()
             elif input_num == '6':
@@ -34,9 +37,9 @@ def main():
             menu.ask_to_continue()
     except KeyboardInterrupt:
         menu.print_goodbye()
-    except Exception as e:
-        menu.print_exception(e)
-        menu.print_exiting()
+    # except Exception as e:
+    #     menu.print_exception(e)
+    #     menu.print_exiting()
 
 
 if __name__ == '__main__':
