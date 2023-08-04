@@ -15,7 +15,7 @@ class DBHandler:
         self.connect, self.c = self.__connect_to_db()
 
     def __connect_to_db(self) -> sql.Connection | sql.Cursor:
-        connect = sql.connect(self.get_path_to_db(), check_same_thread=False)
+        connect = sql.connect(self.get_path_to_db())
         c = connect.cursor()
         return (connect, c)
 

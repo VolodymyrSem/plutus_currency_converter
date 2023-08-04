@@ -1,7 +1,3 @@
-import threading
-from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
-
 from converter.app.menu import Menu
 from converter.handlers.API import APIHandler
 from converter.handlers.backup import BackupJSONFileHandler
@@ -20,52 +16,32 @@ class MainHandler:
         Updates rates for all predefined pairs of currencies'
         """
 
-        backup_data = self.api.get_rates_from_API()
-        self.backup.rewrite_backup(backup_data)
-
+        backup_data = self.api.get_rates_from_api()
         list_of_currencies = self.api.get_list_of_currencies()
-        self.__setup_multi_threading(list_of_currencies)
+        self.backup.rewrite_backup(backup_data)
+        self.__update_pairs_in_prepared_currencies(list_of_currencies)
 
-        self.__update_pairs_in_prepared_currencies()
-
-    def __setup_multi_threading(self, list_of_currencies: list[str]):
-        setattr(self, 'currencies_to_get_rates', list_of_currencies)
-        setattr(self, 'done_records', 0)
-        setattr(self, 'pipeline', Queue(maxsize=8))
-        setattr(self, 'event', threading.Event())
-
-    def __update_pairs_in_prepared_currencies(self):
+    def __update_pairs_in_prepared_currencies(self, list_of_currencies: list[str]):
         self.db.delete_all_from_prepared_currencies()
         self.db.connect.commit()
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            executor.submit(self.__get_rates_and_update_pipeline)
-            executor.submit(self.__put_rates_to_db)
+        number_of_currencies = len(list_of_currencies)
+
+        progress = 0
+        total = number_of_currencies * (number_of_currencies - 1)
+
+        self.menu.progress_bar(progress, total)
+
+        for from_currency in list_of_currencies:
+            rates = self.api.get_rates_from_api(from_currency)
+            for target_currency, result in list(rates.items())[1:]:
+                tuple_to_insert = (from_currency, target_currency, result)
+                self.db.insert_pair_in_prepared_currencies(tuple_to_insert)
+
+                progress += 1
+                self.menu.progress_bar(progress, total)
 
         self.menu.print_smth_successfully('Updated database')
-
-    def __get_rates_and_update_pipeline(self):
-        while self.currencies_to_get_rates:
-            from_currency = self.currencies_to_get_rates.pop()
-            rates = self.api.get_rates_from_API(from_currency)
-            self.pipeline.put((from_currency, rates))
-        self.event.set()
-
-    def __put_rates_to_db(self):
-        while not self.pipeline.empty() or not self.event.is_set():
-            result = self.pipeline.get() if not self.pipeline.empty() else None
-            if result is not None:
-                self.__put_pairs_to_db(result)
-
-    def __put_pairs_to_db(self, from_currency_and_results: tuple):
-        from_currency, rates = from_currency_and_results
-        for to_currency, rate in list(rates.items())[1:]:
-            tuple_to_insert = (from_currency, to_currency, rate)
-
-            self.db.insert_pair_in_prepared_currencies(tuple_to_insert)
-
-            self.done_records += 1
-            self.menu.progress_bar(self.done_records, 26082)
 
     def timestamp_when_database_was_last_time_updated(self):
         return self.backup.get_timestamp_from_backup()

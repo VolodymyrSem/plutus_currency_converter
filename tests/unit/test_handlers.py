@@ -13,13 +13,13 @@ class TestAPIHandler(unittest.TestCase):
         self.api.check_server_state()
 
     def test_get_rates_USD(self):
-        rates = self.api.get_rates_from_API()
+        rates = self.api.get_rates_from_api()
         self.assertIsInstance(rates, dict)
         self.assertIsInstance(rates.get('CZK'), float)
         self.assertEqual(rates.get('CZK'), 21.69)
 
     def test_get_rates_another_currency(self):
-        rates = self.api.get_rates_from_API('CZK')
+        rates = self.api.get_rates_from_api('CZK')
         self.assertIsInstance(rates, dict)
         self.assertEqual(rates.get('BDT'), 5)
         self.assertIs(rates.get('CZK', None), 1)
